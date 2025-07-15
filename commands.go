@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
+
+	"github.com/snkpan17/pokedexcli/internal/pokecache"
 )
 
 func printAllDesc() {
@@ -18,6 +21,7 @@ type cliCommand struct {
 }
 
 var commands map[string]cliCommand
+var cache *pokecache.Cache
 
 func commandExit(conf *Config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
@@ -35,7 +39,7 @@ func commandHelp(conf *Config) error {
 
 func commandMap(conf *Config) error {
 	url := conf.Next
-	locations, prev, next, err := getLocations(url)
+	locations, prev, next, err := getLocations(url, cache)
 	if err != nil {
 		fmt.Printf("error : %v\n", err)
 		return err
@@ -56,7 +60,7 @@ func commandMapB(conf *Config) error {
 		conf.Next = os.Getenv("POKE_LOCATION_URL")
 		return nil
 	}
-	locations, prev, next, err := getLocations(url)
+	locations, prev, next, err := getLocations(url, cache)
 	if err != nil {
 		return err
 	}
@@ -69,6 +73,7 @@ func commandMapB(conf *Config) error {
 }
 
 func init() {
+	cache = pokecache.NewCache(5 * time.Second)
 	commands = make(map[string]cliCommand)
 	commands["help"] = cliCommand{
 		name:     "help",

@@ -2,8 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/snkpan17/pokedexcli/internal/pokecache"
 )
 
 type location struct {
@@ -18,19 +21,26 @@ type LocationApiResponse struct {
 	Results  []location `json:"results"`
 }
 
-func getLocations(url string) ([]string, string, string, error) {
-	res, err := http.Get(url)
-	if err != nil {
-		return []string{}, "", "", err
-	}
+func getLocations(url string, cache *pokecache.Cache) ([]string, string, string, error) {
 	var Data LocationApiResponse
-	decoder := json.NewDecoder(res.Body)
-	for {
-		if err := decoder.Decode(&Data); err == io.EOF {
-			break
-		} else if err != nil {
+	var body []byte
+	cached, ok := cache.Get(url)
+	if !ok {
+		res, err := http.Get(url)
+		if err != nil {
 			return []string{}, "", "", err
 		}
+		body, err = io.ReadAll(res.Body)
+		if err != nil {
+			return []string{}, "", "", err
+		}
+		cache.Add(url, body)
+	} else {
+		body = cached
+	}
+	err := json.Unmarshal(body, &Data)
+	if err != nil {
+		return []string{}, "", "", err
 	}
 	var locations []string
 	for _, loc := range Data.Results {
