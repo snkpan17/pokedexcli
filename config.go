@@ -13,11 +13,6 @@ type Config struct {
 
 var config Config
 
-//var config = Config{
-//	Next:     os.Getenv("POKE_LOCATION_URL"),
-//	Previous: "",
-//}
-
 func init() {
 	err := godotenv.Load()
 	if err != nil {
@@ -28,6 +23,5 @@ func init() {
 		Next:     os.Getenv("POKE_LOCATION_URL"),
 		Previous: "",
 	}
-	//fmt.Printf("from env: %s\n", os.Getenv("POKE_LOCATION_URL"))
 
 }
