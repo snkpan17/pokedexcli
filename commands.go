@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/snkpan17/pokedexcli/internal/pokecache"
 	"os"
 	"time"
-
-	"github.com/snkpan17/pokedexcli/internal/pokecache"
 )
 
 func printAllDesc() {
@@ -88,6 +87,61 @@ func commandExplore(c *Config, words []string) error {
 	return nil
 }
 
+func commandCatch(c *Config, words []string) error {
+	pokemon := words[1]
+	url := c.POKEMON_BASE_URL + pokemon
+	fmt.Println("Throwing a Pokeball at " + pokemon + "...")
+	Pokemon, err := getPokeDetail(url, cache)
+	pokeExp := Pokemon.Base_experience
+	if err != nil {
+		return err
+	}
+	userDefeatsPoke := canDefeat(c.UserExp, pokeExp)
+	if userDefeatsPoke {
+		fmt.Println(pokemon + " was caught!")
+		c.Pokedex[pokemon] = Pokemon
+		if pokeExp > c.UserExp {
+			c.UserExp = pokeExp
+		}
+	} else {
+		fmt.Println(pokemon + " escaped!")
+	}
+	return nil
+}
+
+func printPokemon(Pokemon PokemonDetailResponse) {
+	fmt.Println("Name: ", Pokemon.Name)
+	fmt.Println("Height: ", Pokemon.Height)
+	fmt.Println("Weight: ", Pokemon.Weight)
+	fmt.Println("Stats:")
+	for _, stat := range Pokemon.Stats {
+		fmt.Printf(" -%s: %d\n", stat.Stat.Name, stat.BaseStat)
+	}
+	fmt.Println("Types:")
+	for _, t := range Pokemon.Types {
+		fmt.Println(" - ", t.Type.Name)
+	}
+}
+
+func commandInspect(c *Config, words []string) error {
+	pokemon := words[1]
+	Pokemon, ok := c.Pokedex[pokemon]
+	if !ok {
+		fmt.Println("Pokemon not found in Pokedex. Not caught")
+	} else {
+		printPokemon(Pokemon)
+	}
+	return nil
+}
+
+func commandPokedex(c *Config, words []string) error {
+	fmt.Println("Your Pokedex:")
+	for key, _ := range c.Pokedex {
+		fmt.Println(" - ", key)
+	}
+	return nil
+}
+
 func init() {
 	cache = pokecache.NewCache(5 * time.Second)
 	commands = make(map[string]cliCommand)
@@ -115,5 +169,20 @@ func init() {
 		name:     "explore",
 		desc:     "Show pokemons at this area",
 		callback: commandExplore,
+	}
+	commands["catch"] = cliCommand{
+		name:     "catch",
+		desc:     "Throw pokeball to catch a pokemon",
+		callback: commandCatch,
+	}
+	commands["inspect"] = cliCommand{
+		name:     "inspect",
+		desc:     "Get caught pokemon details",
+		callback: commandInspect,
+	}
+	commands["pokedex"] = cliCommand{
+		name:     "pokedex",
+		desc:     "Show pokemons caught",
+		callback: commandPokedex,
 	}
 }
