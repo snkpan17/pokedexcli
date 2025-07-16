@@ -7,8 +7,9 @@ import (
 )
 
 type Config struct {
-	Next     string
-	Previous string
+	Next                   string
+	Previous               string
+	POKE_LOCATION_BASE_URL string
 }
 
 var config Config
@@ -20,8 +21,9 @@ func init() {
 		os.Exit(1)
 	}
 	config = Config{
-		Next:     os.Getenv("POKE_LOCATION_URL"),
-		Previous: "",
+		Next:                   os.Getenv("POKE_LOCATION_URL"),
+		Previous:               "",
+		POKE_LOCATION_BASE_URL: os.Getenv("POKE_LOCATION_BASE_URL"),
 	}
 
 }

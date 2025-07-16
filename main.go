@@ -25,7 +25,7 @@ func main() {
 				fmt.Println("Unknown command")
 				continue
 			}
-			if err := command.callback(&config); err != nil {
+			if err := command.callback(&config, words); err != nil {
 				fmt.Printf("Error: %v\n", err)
 			}
 		}

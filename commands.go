@@ -17,19 +17,20 @@ func printAllDesc() {
 type cliCommand struct {
 	name     string
 	desc     string
-	callback func(*Config) error
+	callback func(*Config, []string) error
 }
 
 var commands map[string]cliCommand
 var cache *pokecache.Cache
 
-func commandExit(conf *Config) error {
+func commandExit(conf *Config, words []string) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
+	cache.Stop()
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(conf *Config) error {
+func commandHelp(conf *Config, words []string) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage: ")
 	fmt.Println()
@@ -37,7 +38,7 @@ func commandHelp(conf *Config) error {
 	return nil
 }
 
-func commandMap(conf *Config) error {
+func commandMap(conf *Config, words []string) error {
 	url := conf.Next
 	locations, prev, next, err := getLocations(url, cache)
 	if err != nil {
@@ -52,7 +53,7 @@ func commandMap(conf *Config) error {
 	return nil
 }
 
-func commandMapB(conf *Config) error {
+func commandMapB(conf *Config, words []string) error {
 	url := conf.Previous
 	if url == "" {
 		fmt.Println("you're on the first page")
@@ -69,6 +70,21 @@ func commandMapB(conf *Config) error {
 	}
 	conf.Previous = prev
 	conf.Next = next
+	return nil
+}
+
+func commandExplore(c *Config, words []string) error {
+	loc := words[1]
+	url := c.POKE_LOCATION_BASE_URL + loc
+	fmt.Printf("Exploring %s...\n", loc)
+	pokemons, err := getPokeAtLoc(url, cache)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Found Pokemon:")
+	for _, pokemon := range pokemons {
+		fmt.Println(" - " + pokemon)
+	}
 	return nil
 }
 
@@ -94,5 +110,10 @@ func init() {
 		name:     "mapb",
 		desc:     "Show previous 20 locations in the Pokemon world",
 		callback: commandMapB,
+	}
+	commands["explore"] = cliCommand{
+		name:     "explore",
+		desc:     "Show pokemons at this area",
+		callback: commandExplore,
 	}
 }
